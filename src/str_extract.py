@@ -4,23 +4,30 @@
 import os, sys, re
 import argparse
 
-def strextract(dir, suffix, path, all):  
-    list_expressions =[]
-    compiled_re = re.compile(r"^.*'.*'.*"'"'r".*"'"'r"$", re.IGNORECASE)
-    for root, dirs, filename_list in os.walk(dir):
-        for filename in filename_list:
-            chemin_fichier = os.path.join(dirs, filename)
-            if suffix and not filename.endswith(suffix):
-                continue
-            if not all and filename.startswith("."):
-                continue
-            with open(filename, 'r') as file:
-                content = file.readlines()
-                pattern = re.findall(compiled_re, content)
-                list_expressions(pattern)
-    print(list_expressions)
+def strextract(dir, suffix=None, path=False, all=False):  
+    # Expression régulière pour trouver des chaînes littérales entre guillemets simples ou doubles
+    # compiled_re = re.compile(r"^.*'.*'.*"'"'r".*"'"'r"$", re.IGNORECASE)
+    regex_chain = re.compile(r'(["\'])(.*?)\1', re.IGNORECASE)
+    # Parcourir récursivement le répertoire
+    for root, directorys, filename in os.walk(dir):
+        for name_file in filename:
+            file_path = os.path.join(directorys, name_file)
 
+            # Vérifier si le fichier a le suffixe spécifié
+            if suffix or not name_file.endswith(suffix):
+                continue
 
+            # Ignorer les fichiers cachés si l'option -a n'est pas spécifiée
+            if not all and name_file.startswith("."):
+                continue
+
+            with open(file_path, 'r') as file:
+                for match in re.finditer(regex_chain, file.read()):
+                    chaine = match.group(0)
+                    if path:
+                        print(f"{file_path}\t{chaine}")
+                    else:
+                        print(chaine)
 def main():
     # build an empty parser
     parser = argparse.ArgumentParser(description='Return path')
